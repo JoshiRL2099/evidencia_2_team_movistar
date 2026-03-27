@@ -15,6 +15,9 @@
         <a class="navbar-brand" href="/">Sistema</a>
 
         <div>
+            <a href="{{ route('dashboard') }}" class="btn btn-outline-light">
+                Dashboard
+            </a>
             <a href="{{ route('orders.index') }}" class="btn btn-outline-light">
                 Órdenes
             </a>
@@ -22,8 +25,20 @@
             <a href="{{ route('users.index') }}" class="btn btn-outline-light">
                 Usuarios
             </a>
-        </div>
 
+            <a href="{{ route('products.index') }}" class="btn btn-outline-light">
+                Productos
+            </a>
+
+            <a href="{{ route('logout') }}" class="btn btn-outline-light"
+                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                Cerrar sesión
+            </a>
+
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
+        </div>
     </div>
 </nav>
 

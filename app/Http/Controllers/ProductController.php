@@ -25,6 +25,7 @@ class ProductController extends Controller
             'sku' => ['required', 'string', 'max:255', 'unique:products,sku'],
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:100'],
+            'stock_quantity' => ['required', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]);
 
@@ -32,6 +33,7 @@ class ProductController extends Controller
             'sku' => $data['sku'],
             'name' => $data['name'],
             'unit' => $data['unit'],
+            'stock_quantity' => $data['stock_quantity'],
             'active' => $request->boolean('active'),
         ]);
 
@@ -61,6 +63,7 @@ class ProductController extends Controller
             'sku' => ['required', 'string', 'max:255', 'unique:products,sku,' . $id . ',product_id'],
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:100'],
+            'stock_quantity' => ['required', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],
         ]);
 
@@ -68,6 +71,7 @@ class ProductController extends Controller
             'sku' => $data['sku'],
             'name' => $data['name'],
             'unit' => $data['unit'],
+            'stock_quantity' => $data['stock_quantity'],
             'active' => $request->boolean('active'),
         ]);
 
