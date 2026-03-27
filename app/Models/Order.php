@@ -14,63 +14,42 @@ class Order extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'order_id',
         'invoice_number',
-        'order_datetime',
+        'customer_name',
+        'name',
+        'phone',
+        'rfc',
+        'address',
         'notes',
-        'status',
-        'is_deleted',
-        'deleted_at',
-        'created_at',
-        'updated_at',
-        'customer_id',
-        'created_by_user_id',
+        'state',
+        'date_time',
     ];
 
-    protected $casts = [
-        'order_datetime' => 'datetime',
-        'is_deleted' => 'boolean',
-        'deleted_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
-    protected static function booted(): void
+    public function items()
     {
+        return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    public function deliveryAddress()
+    {
+        return $this->hasOne(OrderDeliveryAddress::class, 'order_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
         static::creating(function ($model) {
-            if (empty($model->order_id)) {
+            if (!$model->order_id) {
                 $model->order_id = (string) Str::uuid();
             }
         });
     }
 
-    public function customer()
+    // relaciones
+    public function address()
     {
-        return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
+        return $this->hasOne(OrderDeliveryAddress::class,'order_id');
     }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by_user_id', 'user_id');
-    }
-
-    public function deliveryAddress()
-    {
-        return $this->hasOne(OrderDeliveryAddress::class, 'order_id', 'order_id');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(OrderItem::class, 'order_id', 'order_id');
-    }
-
-    public function photos()
-    {
-        return $this->hasMany(Photo::class, 'order_id', 'order_id');
-    }
-
-    public function statusHistory()
-    {
-        return $this->hasMany(OrderStatusHistory::class, 'order_id', 'order_id');
-    }
+    
 }

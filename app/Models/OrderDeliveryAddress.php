@@ -14,7 +14,7 @@ class OrderDeliveryAddress extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'order_address_id',
+        'order_id',
         'street',
         'ext_number',
         'int_number',
@@ -22,8 +22,7 @@ class OrderDeliveryAddress extends Model
         'city',
         'state',
         'zip',
-        'references',
-        'order_id',
+        'references'
     ];
 
     protected static function booted(): void

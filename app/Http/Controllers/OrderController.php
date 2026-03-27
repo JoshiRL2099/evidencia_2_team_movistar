@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -25,31 +26,65 @@ class OrderController extends Controller
 
         return view('orders.create', compact('customers'));
     }
-
+    
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'invoice_number' => ['required', 'string', 'max:255'],
-            'order_datetime' => ['required', 'date'],
-            'notes' => ['nullable', 'string'],
-            'customer_id' => ['required', 'exists:customers,customer_id'],
-        ]);
+     $data = $request->validate([
+        'invoice_number' => ['required', 'string', 'max:255'],
+        'customer_number' => ['nullable', 'string'],
+        'date_time' => ['required', 'date'],
+        'name' => ['required', 'string'],
+        'phone' => ['nullable', 'string'],
+        'rfc' => ['nullable', 'string'],
+        'address' => ['required', 'string'],
+        'notes' => ['nullable', 'string'],
 
-        $order = Order::create([
-            'invoice_number' => $data['invoice_number'],
-            'order_datetime' => $data['order_datetime'],
-            'notes' => $data['notes'] ?? null,
-            'status' => 'ORDERED',
-            'is_deleted' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-            'customer_id' => $data['customer_id'],
-            'created_by_user_id' => Auth::id(),
-        ]);
+        'items' => ['nullable', 'array'],
+        'items.*.product_id' => ['required_with:items', 'exists:products,id'],
+        'items.*.quantity' => ['required_with:items', 'numeric'],
+        'items.*.unit_price' => ['nullable', 'numeric'],
+    ]);
 
-        return redirect()->route('orders.show', $order->order_id)
-            ->with('success', 'Pedido creado correctamente.');
+    $order = Order::create([
+        'invoice_number' => $data['invoice_number'],
+        'customer_number' => $data['customer_number'] ?? null,
+        'name' => $data['name'],
+        'phone' => $data['phone'] ?? null,
+        'rfc' => $data['rfc'] ?? null,
+        'address' => $data['address'],
+        'notes' => $data['notes'] ?? null,
+        'state' => 'Requested',
+        'date_time' => $data['date_time'],
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    OrderDeliveryAddress::create([
+        'order_address_id' => Str::uuid(),
+        'order_id' => $order->id,
+        'street' => $data['address'], // usamos address aquí
+        'ext_number' => 'N/A',
+        'neighborhood' => 'N/A',
+        'city' => 'N/A',
+        'state' => 'N/A',
+        'zip' => '00000',
+    ]);
+
+    if (!empty($data['items'])) {
+        foreach ($data['items'] as $itemData) {
+            OrderItem::create([
+                'order_item_id' => Str::uuid(),
+                'order_id' => $order->id,
+                'product_id' => $itemData['product_id'],
+                'quantity' => $itemData['quantity'],
+                'unit_price' => $itemData['unit_price'] ?? 0,
+            ]);
+        }
     }
+
+    return redirect()->route('orders.show', $order->id)
+        ->with('success', 'Pedido creado correctamente.');
+}
 
     public function show(string $id)
     {

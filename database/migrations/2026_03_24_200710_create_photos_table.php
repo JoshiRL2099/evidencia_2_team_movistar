@@ -8,17 +8,22 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('photos', function (Blueprint $table) {
-            $table->uuid('photo_id')->primary();
-            $table->enum('type', ['LOADED_UNIT', 'UNLOADED_EVIDENCE']);
-            $table->string('url');
-            $table->timestamp('uploaded_at')->useCurrent();
+    $table->id();
 
-            $table->uuid('order_id');
-            $table->uuid('uploaded_by_user_id');
+    $table->enum('type', ['LOADED_UNIT', 'UNLOADED_EVIDENCE']);
+    $table->string('url');
+    $table->timestamp('uploaded_at')->useCurrent();
 
-            $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
-            $table->foreign('uploaded_by_user_id')->references('user_id')->on('users');
-        });
+    $table->foreignId('order_id')
+          ->constrained('orders')
+          ->onDelete('cascade');
+
+    $table->foreignId('uploaded_by_user_id')
+          ->constrained('users')
+          ->onDelete('cascade');
+
+    $table->timestamps();
+});
     }
 
     public function down(): void

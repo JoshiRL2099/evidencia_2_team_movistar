@@ -9,6 +9,7 @@ return new class extends Migration {
     {
         Schema::create('order_delivery_addresses', function (Blueprint $table) {
             $table->uuid('order_address_id')->primary();
+
             $table->string('street');
             $table->string('ext_number');
             $table->string('int_number')->nullable();
@@ -17,9 +18,13 @@ return new class extends Migration {
             $table->string('state');
             $table->string('zip');
             $table->string('references')->nullable();
+            
+            $table->foreignId('order_id')
+                ->unique()
+                ->constrained('orders')
+                ->onDelete('cascade');
 
-            $table->uuid('order_id')->unique();
-            $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 

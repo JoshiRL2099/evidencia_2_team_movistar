@@ -9,14 +9,16 @@ return new class extends Migration {
     {
         Schema::create('order_items', function (Blueprint $table) {
             $table->uuid('order_item_id')->primary();
+
             $table->decimal('quantity', 10, 2);
             $table->decimal('unit_price', 10, 2)->nullable();
 
-            $table->uuid('order_id');
-            $table->uuid('product_id');
+            $table->foreignId('order_id')
+                ->constrained('orders')
+                ->onDelete('cascade');
 
-            $table->foreign('order_id')->references('order_id')->on('orders')->onDelete('cascade');
-            $table->foreign('product_id')->references('product_id')->on('products');
+            $table->foreignId('product_id')
+                ->constrained('products');
 
             $table->unique(['order_id', 'product_id']);
         });

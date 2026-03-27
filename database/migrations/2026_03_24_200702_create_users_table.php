@@ -8,7 +8,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->uuid('user_id')->primary();
+            $table->id();
+            
             $table->string('username')->unique();
             $table->string('password_hash');
             $table->string('full_name');
