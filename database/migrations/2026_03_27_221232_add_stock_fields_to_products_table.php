@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->float('stock_quantity', 10, 2)->default(0)->after('unit');
-            $table->float('minimum_stock', 10, 2)->default(0)->after('stock_quantity');
+            $table->float('stock_quantity', 10)->default(0)->after('unit');
+            $table->float('minimum_stock', 10)->default(0)->after('stock_quantity');
         });
     }
 
