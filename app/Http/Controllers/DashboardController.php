@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\User;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -28,19 +29,23 @@ class DashboardController extends Controller
             ->whereDate('updated_at', today())
             ->count();
 
-        $salesUsers = User::whereHas('role', fn ($q) => $q->where('name', 'SALES'))
+        $outOfStockItems = Product::where('active', true)
+            ->where('stock_quantity', '<=', 0)
+            ->count();
+
+        $salesUsers = User::whereHas('role', fn($q) => $q->where('name', 'SALES'))
             ->where('is_active', true)
             ->count();
 
-        $purchasingUsers = User::whereHas('role', fn ($q) => $q->where('name', 'PURCHASING'))
+        $purchasingUsers = User::whereHas('role', fn($q) => $q->where('name', 'PURCHASING'))
             ->where('is_active', true)
             ->count();
 
-        $warehouseUsers = User::whereHas('role', fn ($q) => $q->where('name', 'WAREHOUSE'))
+        $warehouseUsers = User::whereHas('role', fn($q) => $q->where('name', 'WAREHOUSE'))
             ->where('is_active', true)
             ->count();
 
-        $routeUsers = User::whereHas('role', fn ($q) => $q->where('name', 'ROUTE'))
+        $routeUsers = User::whereHas('role', fn($q) => $q->where('name', 'ROUTE'))
             ->where('is_active', true)
             ->count();
 
@@ -54,6 +59,7 @@ class DashboardController extends Controller
             'pendingOrders',
             'onRouteOrders',
             'deliveredToday',
+            'outOfStockItems',
             'salesUsers',
             'purchasingUsers',
             'warehouseUsers',
@@ -69,9 +75,9 @@ class DashboardController extends Controller
             'deliveryAddress',
             'items.product'
         ])
-        ->where('created_by_user_id', $user->user_id)
-        ->latest('created_at')
-        ->first();
+            ->where('created_by_user_id', $user->user_id)
+            ->latest('created_at')
+            ->first();
 
         return view('dashboard-user', compact('user', 'latestOrder'));
     }
