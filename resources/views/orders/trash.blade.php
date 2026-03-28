@@ -3,16 +3,15 @@
 @section('content')
 
     <div class="container">
-        <h2>Lista de Órdenes</h2>
-
-        <a href="{{ route('orders.create') }}" class="btn btn-primary mb-3">Nueva Orden</a>
-        <a href="{{ route('orders.trash') }}" class="btn btn-secondary mb-3">Papelera</a>
+        <h2>Papelera de Órdenes</h2>
 
         @if(session('success'))
             <div class="alert alert-success">
                 {{ session('success') }}
             </div>
         @endif
+
+        <a href="{{ route('orders.index') }}" class="btn btn-secondary mb-3">Volver</a>
 
         <table class="table table-bordered">
             <thead>
@@ -21,8 +20,7 @@
                     <th>Cliente</th>
                     <th>Usuario</th>
                     <th>Total</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
+                    <th>Eliminada el</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -33,23 +31,18 @@
                         <td>{{ $order->customer->display_name ?? 'N/A' }}</td>
                         <td>{{ $order->createdBy->full_name ?? 'N/A' }}</td>
                         <td>${{ number_format($order->total, 2) }}</td>
-                        <td>{{ $order->order_datetime }}</td>
-                        <td>{{ $order->status }}</td>
+                        <td>{{ $order->deleted_at }}</td>
                         <td>
-                            <a href="{{ route('orders.show', $order->order_id) }}" class="btn btn-info btn-sm">Ver</a>
-                            <a href="{{ route('orders.edit', $order->order_id) }}" class="btn btn-warning btn-sm">Editar</a>
-
-                            <form action="{{ route('orders.destroy', $order->order_id) }}" method="POST"
+                            <form action="{{ route('orders.restore', $order->order_id) }}" method="POST"
                                 style="display:inline;">
                                 @csrf
-                                @method('DELETE')
-                                <button class="btn btn-danger btn-sm">Eliminar</button>
+                                <button class="btn btn-success btn-sm">Restaurar</button>
                             </form>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7">No hay órdenes registradas.</td>
+                        <td colspan="6">No hay órdenes en la papelera.</td>
                     </tr>
                 @endforelse
             </tbody>

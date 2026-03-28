@@ -13,12 +13,18 @@ return new class extends Migration {
             $table->decimal('quantity', 10, 2);
             $table->decimal('unit_price', 10, 2)->nullable();
 
-            $table->foreignId('order_id')
-                ->constrained('orders')
+            $table->uuid('order_id');
+            $table->uuid('product_id');
+
+            $table->foreign('order_id')
+                ->references('order_id')
+                ->on('orders')
                 ->onDelete('cascade');
 
-            $table->foreignId('product_id')
-                ->constrained('products');
+            $table->foreign('product_id')
+                ->references('product_id')
+                ->on('products')
+                ->onDelete('cascade');
 
             $table->unique(['order_id', 'product_id']);
         });

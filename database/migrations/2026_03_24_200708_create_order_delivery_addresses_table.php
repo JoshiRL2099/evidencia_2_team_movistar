@@ -18,13 +18,12 @@ return new class extends Migration {
             $table->string('state');
             $table->string('zip');
             $table->string('references')->nullable();
-            
-            $table->foreignId('order_id')
-                ->unique()
-                ->constrained('orders')
-                ->onDelete('cascade');
 
-            $table->timestamps();
+            $table->uuid('order_id')->unique();
+            $table->foreign('order_id')
+                ->references('order_id')
+                ->on('orders')
+                ->onDelete('cascade');
         });
     }
 

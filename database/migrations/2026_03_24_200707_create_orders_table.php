@@ -4,22 +4,33 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('orders', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('order_id')->primary();
             $table->string('invoice_number');
-            $table->string('customer_number');
-            $table->string('name');
-            $table->string('phone')->nullable();
-            $table->string('rfc')->nullable();
-            $table->text('address')->nullable();
+            $table->timestamp('order_datetime');
             $table->text('notes')->nullable();
-            $table->string('state');
-            $table->dateTime('date_time');
-            $table->string('banner_image')->nullable();
-            $table->timestamps();
+            $table->enum('status', ['ORDERED', 'IN_PROCESS', 'IN_ROUTE', 'DELIVERED', 'DELETED']);
+            $table->boolean('is_deleted')->default(false);
+            $table->timestamp('deleted_at')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->nullable();
+
+            $table->uuid('customer_id');
+            $table->uuid('created_by_user_id');
+
+            $table->foreign('customer_id')
+                ->references('customer_id')
+                ->on('customers')
+                ->onDelete('cascade');
+
+            $table->foreign('created_by_user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 

@@ -30,6 +30,10 @@
                 Productos
             </a>
 
+            <a href="{{ route('orders.trash') }}" class="btn btn-outline-light">
+                Papelera
+            </a>
+
             <a href="{{ route('logout') }}" class="btn btn-outline-light"
                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 Cerrar sesión

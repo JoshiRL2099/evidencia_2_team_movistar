@@ -51,19 +51,4 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
-
-    public function createdOrders()
-    {
-        return $this->hasMany(Order::class, 'created_by_user_id', 'user_id');
-    }
-
-    public function uploadedPhotos()
-    {
-        return $this->hasMany(Photo::class, 'uploaded_by_user_id', 'user_id');
-    }
-
-    public function statusChanges()
-    {
-        return $this->hasMany(OrderStatusHistory::class, 'changed_by_user_id', 'user_id');
-    }
 }

@@ -14,42 +14,70 @@ class Order extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'order_id',
         'invoice_number',
-        'customer_name',
-        'name',
-        'phone',
-        'rfc',
-        'address',
+        'order_datetime',
         'notes',
-        'state',
-        'date_time',
+        'status',
+        'is_deleted',
+        'deleted_at',
+        'created_at',
+        'updated_at',
+        'customer_id',
+        'created_by_user_id',
     ];
 
-    public function items()
-    {
-        return $this->hasMany(OrderItem::class, 'order_id');
-    }
+    protected $casts = [
+        'order_datetime' => 'datetime',
+        'is_deleted' => 'boolean',
+        'deleted_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
-    public function deliveryAddress()
+    protected static function booted(): void
     {
-        return $this->hasOne(OrderDeliveryAddress::class, 'order_id');
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
         static::creating(function ($model) {
-            if (!$model->order_id) {
+            if (empty($model->order_id)) {
                 $model->order_id = (string) Str::uuid();
             }
         });
     }
 
-    // relaciones
-    public function address()
+    public function customer()
     {
-        return $this->hasOne(OrderDeliveryAddress::class,'order_id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
     }
-    
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id', 'user_id');
+    }
+
+    public function deliveryAddress()
+    {
+        return $this->hasOne(OrderDeliveryAddress::class, 'order_id', 'order_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class, 'order_id', 'order_id');
+    }
+
+    public function photos()
+    {
+        return $this->hasMany(Photo::class, 'order_id', 'order_id');
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(OrderStatusHistory::class, 'order_id', 'order_id');
+    }
+
+    public function getTotalAttribute()
+    {
+        return $this->items->sum(function ($item) {
+            return $item->quantity * ($item->unit_price ?? 0);
+        });
+    }
 }
