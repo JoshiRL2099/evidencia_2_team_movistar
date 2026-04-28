@@ -10,10 +10,11 @@
     <p><strong>SKU:</strong> {{ $product->sku }}</p>
     <p><strong>Nombre:</strong> {{ $product->name }}</p>
     <p><strong>Unidad:</strong> {{ $product->unit }}</p>
+    <p><strong>Precio:</strong> ${{ number_format($product->price, 2) }}</p>
     <p><strong>Cantidad en stock:</strong> {{ $product->stock_quantity }}</p>
     <p><strong>Activo:</strong> {{ $product->active ? 'Sí' : 'No' }}</p>
 
-    <a href="{{ route('products.index') }}">Volver</a>
+    <a href="{{ route('products.index') }}" class="btn btn-secondary">Volver</a>
 
 </div>
 

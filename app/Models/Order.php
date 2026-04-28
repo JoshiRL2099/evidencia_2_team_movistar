@@ -74,10 +74,10 @@ class Order extends Model
         return $this->hasMany(OrderStatusHistory::class, 'order_id', 'order_id');
     }
 
-    public function getTotalAttribute()
+    public function getTotalAttribute(): float
     {
         return $this->items->sum(function ($item) {
-            return $item->quantity * ($item->unit_price ?? 0);
+            return (float) $item->quantity * (float) ($item->unit_price ?? 0);
         });
     }
 }

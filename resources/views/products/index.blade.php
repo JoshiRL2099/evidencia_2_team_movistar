@@ -7,9 +7,9 @@
     <h2>Productos</h2>
 
     @if(session('success'))
-        <p style="color: green;">
+        <div class="alert alert-success">
             {{ session('success') }}
-        </p>
+        </div>
     @endif
 
     <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">
@@ -22,6 +22,7 @@
                 <th>SKU</th>
                 <th>Nombre</th>
                 <th>Unidad</th>
+                <th>Precio</th>
                 <th>Cantidad en stock</th>
                 <th>Activo</th>
                 <th>Acciones</th>
@@ -34,6 +35,7 @@
                     <td>{{ $product->sku }}</td>
                     <td>{{ $product->name }}</td>
                     <td>{{ $product->unit }}</td>
+                    <td>${{ number_format($product->price, 2) }}</td>
                     <td>{{ $product->stock_quantity }}</td>
                     <td>{{ $product->active ? 'Sí' : 'No' }}</td>
 
@@ -57,7 +59,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5">No hay productos registrados</td>
+                    <td colspan="7">No hay productos registrados</td>
                 </tr>
             @endforelse
         </tbody>

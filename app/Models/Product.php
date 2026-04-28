@@ -14,19 +14,21 @@ class Product extends Model
     public $timestamps = false;
 
     protected $fillable = [
-    'product_id',
-    'sku',
-    'name',
-    'unit',
-    'stock_quantity',
-    'minimum_stock',
-    'active',
+        'product_id',
+        'sku',
+        'name',
+        'unit',
+        'price',      
+        'stock_quantity',
+        'minimum_stock',
+        'active',
     ];
 
     protected $casts = [
-    'active' => 'boolean',
-    'stock_quantity' => 'float',
-    'minimum_stock' => 'decimal:2',
+        'active'         => 'boolean',
+        'price'          => 'float',   
+        'stock_quantity' => 'float',
+        'minimum_stock'  => 'float',
     ];
 
     protected static function booted(): void

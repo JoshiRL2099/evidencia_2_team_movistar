@@ -22,19 +22,21 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'sku' => ['required', 'string', 'max:255', 'unique:products,sku'],
-            'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:100'],
+            'sku'            => ['required', 'string', 'max:255', 'unique:products,sku'],
+            'name'           => ['required', 'string', 'max:255'],
+            'unit'           => ['required', 'string', 'max:100'],
+            'price'          => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'numeric', 'min:0'],
-            'active' => ['nullable', 'boolean'],
+            'active'         => ['nullable', 'boolean'],
         ]);
 
         Product::create([
-            'sku' => $data['sku'],
-            'name' => $data['name'],
-            'unit' => $data['unit'],
+            'sku'            => $data['sku'],
+            'name'           => $data['name'],
+            'unit'           => $data['unit'],
+            'price'          => $data['price'],
             'stock_quantity' => $data['stock_quantity'],
-            'active' => $request->boolean('active'),
+            'active'         => $request->boolean('active'),
         ]);
 
         return redirect()->route('products.index')
@@ -60,19 +62,21 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
 
         $data = $request->validate([
-            'sku' => ['required', 'string', 'max:255', 'unique:products,sku,' . $id . ',product_id'],
-            'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:100'],
+            'sku'            => ['required', 'string', 'max:255', 'unique:products,sku,' . $id . ',product_id'],
+            'name'           => ['required', 'string', 'max:255'],
+            'unit'           => ['required', 'string', 'max:100'],
+            'price'          => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'numeric', 'min:0'],
-            'active' => ['nullable', 'boolean'],
+            'active'         => ['nullable', 'boolean'],
         ]);
 
         $product->update([
-            'sku' => $data['sku'],
-            'name' => $data['name'],
-            'unit' => $data['unit'],
+            'sku'            => $data['sku'],
+            'name'           => $data['name'],
+            'unit'           => $data['unit'],
+            'price'          => $data['price'],
             'stock_quantity' => $data['stock_quantity'],
-            'active' => $request->boolean('active'),
+            'active'         => $request->boolean('active'),
         ]);
 
         return redirect()->route('products.index')
