@@ -1,0 +1,723 @@
+<template>
+  <!-- Búsqueda de pedido (vista inicial) -->
+  <div v-if="!showDetails" class="page">
+    <div class="container">
+      <h1 class="title">Consulta pública de pedidos</h1>
+      <p class="subtitle">
+        Ingresa tu número de pedido y número de cliente para consultar el estado.
+      </p>
+
+      <form class="lookup-form" @submit.prevent="lookupOrder">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="invoice_number">Número de pedido</label>
+            <input
+              id="invoice_number"
+              v-model="form.invoice_number"
+              type="text"
+              placeholder="Ej. FAC-1001"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="customer_number">Número de cliente</label>
+            <input
+              id="customer_number"
+              v-model="form.customer_number"
+              type="text"
+              placeholder="Ej. CL-10001"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn" :disabled="loading">
+          {{ loading ? 'Consultando...' : 'Cargar' }}
+        </button>
+      </form>
+
+      <div v-if="errorMessage" class="alert error">
+        {{ errorMessage }}
+      </div>
+
+      <div v-if="successMessage" class="alert success">
+        {{ successMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalles del pedido (vista después de búsqueda) -->
+  <div v-else class="page-details">
+    <div class="header">
+      <button class="menu-toggle" @click="toggleMenu">☰</button>
+      <div class="header-title">ORDER DETAILS</div>
+      <div class="header-user">
+        <div class="user-circle">{{ getUserInitial }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ getUserName }}</div>
+          <div class="user-role">User</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" :class="{ 'show-menu': showSidebar }">
+        <div class="sidebar-header">
+          <div class="logo">📦</div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-item active">📊 Dashboard</div>
+          <div class="nav-item">⚙️ Settings</div>
+        </nav>
+      </aside>
+
+      <!-- Contenido principal -->
+      <main class="content">
+        <!-- Sección de bienvenida -->
+        <div class="welcome-section">
+          <h1 class="welcome-title">Welcome, {{ getUserName }}.</h1>
+          <p class="welcome-subtitle">Here you will see a summary of the order status information.</p>
+        </div>
+
+        <!-- Sección de estado -->
+        <div class="order-status-section">
+          <h2 class="section-title">ORDER STATUS</h2>
+          <div class="status-cards">
+            <div class="status-card">
+              <div class="card-label">Customer Number</div>
+              <div class="card-value">{{ order.customer?.customer_number || 'N/A' }}</div>
+            </div>
+            <div class="status-card">
+              <div class="card-label">Invoice Number</div>
+              <div class="card-value">{{ order.invoice_number }}</div>
+            </div>
+            <div class="status-card">
+              <div class="card-label">Current Status</div>
+              <div class="card-value-status">
+                <span class="status-dot" :class="'status-' + (order.status?.toLowerCase() || 'pending')"></span>
+                {{ formatStatus(order.status) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flujo de entrega y detalles -->
+        <div class="delivery-section">
+          <div class="delivery-flow">
+            <div class="flow-icon">📦</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-icon">🚚</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-icon">📦</div>
+          </div>
+
+          <div class="order-details-panel">
+            <h3 class="panel-title">ORDER DETAILS</h3>
+            <div class="details-grid">
+              <div class="detail-row">
+                <span class="detail-label">CLIENT</span>
+                <span class="detail-value">{{ order.customer?.display_name || 'N/A' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">ADDRESS</span>
+                <span class="detail-value">{{ order.delivery_address?.address_line_1 || 'N/A' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">MATERIALS</span>
+                <ul class="materials-list">
+                  <li v-for="item in order.items" :key="item.id">
+                    {{ item.product?.name }} - {{ item.quantity }} {{ item.product?.unit || 'unidades' }}
+                  </li>
+                </ul>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">NOTES</span>
+                <span class="detail-value">{{ order.notes || 'Sin notas' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">ORDER DATE</span>
+                <span class="detail-value">{{ formatDate(order.order_datetime) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-back" @click="goBack">← Volver a búsqueda</button>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  name: 'PublicOrderLookupView',
+  data() {
+    return {
+      loading: false,
+      showDetails: false,
+      showSidebar: true,
+      form: {
+        invoice_number: '',
+        customer_number: '',
+      },
+      order: null,
+      errorMessage: '',
+      successMessage: '',
+      userName: 'UserName',
+    }
+  },
+  computed: {
+    getUserName() {
+      return this.userName
+    },
+    getUserInitial() {
+      return this.userName.charAt(0).toUpperCase()
+    },
+  },
+  methods: {
+    async lookupOrder() {
+      this.loading = true
+      this.order = null
+      this.errorMessage = ''
+      this.successMessage = ''
+
+      try {
+        const response = await axios.post(
+          'http://127.0.0.1:8000/api/public/orders/lookup',
+          {
+            invoice_number: this.form.invoice_number,
+            customer_number: this.form.customer_number,
+          },
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+
+        this.successMessage = response.data.message
+        this.order = response.data.data
+        this.showDetails = true
+      } catch (error) {
+        if (error.response) {
+          if (error.response.status === 404) {
+            this.errorMessage =
+              error.response.data.message ||
+              'No se encontró un pedido con esos datos.'
+          } else if (error.response.status === 422) {
+            const errors = error.response.data.errors
+            if (errors) {
+              this.errorMessage = Object.values(errors).flat().join(' ')
+            } else {
+              this.errorMessage = 'Error de validación.'
+            }
+          } else {
+            this.errorMessage =
+              error.response.data.message || 'Ocurrió un error al consultar el pedido.'
+          }
+        } else {
+          this.errorMessage = 'No fue posible conectar con el servidor.'
+        }
+      } finally {
+        this.loading = false
+      }
+    },
+    goBack() {
+      this.showDetails = false
+      this.order = null
+      this.form = {
+        invoice_number: '',
+        customer_number: '',
+      }
+      this.errorMessage = ''
+      this.successMessage = ''
+    },
+    toggleMenu() {
+      this.showSidebar = !this.showSidebar
+    },
+    formatDate(dateString) {
+      if (!dateString) return 'N/A'
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+      return new Date(dateString).toLocaleDateString('es-ES', options)
+    },
+    formatStatus(status) {
+      if (!status) return 'Pendiente'
+      const statusMap = {
+        'pending': 'Pendiente',
+        'in_progress': 'En Progreso',
+        'delivered': 'Entregado',
+        'cancelled': 'Cancelado',
+      }
+      return statusMap[status.toLowerCase()] || status
+    },
+  },
+}
+</script>
+
+<style scoped>
+* {
+  box-sizing: border-box;
+}
+
+/* ============ Vista de búsqueda (inicial) ============ */
+.page {
+  min-height: 100vh;
+  background: #87c8ee;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: transparent;
+}
+
+.title {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #1b1b1b;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 30px;
+  color: #2f2f2f;
+}
+
+.lookup-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.form-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #222;
+}
+
+.form-group input {
+  padding: 12px 14px;
+  border: none;
+  outline: none;
+  background: #d8d8d8;
+  font-size: 15px;
+}
+
+.btn {
+  background: #5dd44f;
+  color: #111;
+  border: none;
+  padding: 12px 28px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.alert {
+  max-width: 800px;
+  margin: 0 auto 20px auto;
+  padding: 14px 16px;
+  font-weight: 500;
+}
+
+.alert.error {
+  background: #ffd7d7;
+  color: #8a1f1f;
+}
+
+.alert.success {
+  background: #d8f7d4;
+  color: #1f6b2d;
+}
+
+/* ============ Vista de detalles de pedido ============ */
+.page-details {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 20px;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  display: none;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 1px;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #a0826d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #999;
+}
+
+.layout {
+  display: flex;
+  flex: 1;
+}
+
+/* ============ Sidebar ============ */
+.sidebar {
+  width: 180px;
+  background: #e8f4f8;
+  padding: 20px 0;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-header {
+  text-align: center;
+  padding: 20px 0 30px 0;
+  font-size: 28px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  padding: 12px 20px;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-item.active {
+  background: #c8e6f0;
+  color: #0066cc;
+  border-left: 4px solid #0066cc;
+}
+
+.nav-item:hover {
+  background: #d8eef5;
+}
+
+/* ============ Contenido principal ============ */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 30px;
+}
+
+.welcome-section {
+  margin-bottom: 40px;
+}
+
+.welcome-title {
+  font-size: 28px;
+  color: #0066cc;
+  margin: 0 0 10px 0;
+}
+
+.welcome-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* ============ Sección ORDER STATUS ============ */
+.order-status-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.status-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 20px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #222;
+}
+
+.card-value-status {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.status-pending {
+  background: #ffc107;
+}
+
+.status-dot.status-in_progress {
+  background: #ff9800;
+}
+
+.status-dot.status-delivered {
+  background: #4caf50;
+}
+
+.status-dot.status-cancelled {
+  background: #f44336;
+}
+
+/* ============ Flujo y detalles ============ */
+.delivery-section {
+  margin-bottom: 40px;
+}
+
+.delivery-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.flow-icon {
+  font-size: 32px;
+}
+
+.flow-arrow {
+  font-size: 20px;
+  color: #999;
+}
+
+/* ============ Panel de detalles ============ */
+.order-details-panel {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 24px;
+  border-radius: 4px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 100px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  color: #666;
+  text-align: right;
+  flex: 1;
+}
+
+.materials-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+
+.materials-list li {
+  color: #666;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.btn-back {
+  background: #5dd44f;
+  color: #111;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 20px;
+}
+
+.btn-back:hover {
+  background: #50c63f;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -180px;
+    top: 0;
+    height: 100vh;
+    transition: left 0.3s;
+    z-index: 1000;
+  }
+
+  .sidebar.show-menu {
+    left: 0;
+  }
+
+  .status-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .header-title {
+    flex: 0 0 100%;
+  }
+
+  .order-details-panel {
+    padding: 16px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detail-value {
+    text-align: left;
+  }
+}
+</style>
