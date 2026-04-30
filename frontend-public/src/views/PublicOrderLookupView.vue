@@ -1,46 +1,35 @@
 <template>
-  <!-- Búsqueda de pedido (vista inicial) -->
-  <div v-if="!showDetails" class="page">
-    <div class="container">
-      <h1 class="title">Consulta pública de pedidos</h1>
-      <p class="subtitle">
-        Ingresa tu número de pedido y número de cliente para consultar el estado.
-      </p>
+  <!-- Búsqueda de pedido (vista inicial) - estructura según login.blade.php -->
+  <div v-if="!showDetails" class="lookup-page">
+    <div class="hero" aria-hidden="true"></div>
 
-      <form class="lookup-form" @submit.prevent="lookupOrder">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="invoice_number">Número de pedido</label>
-            <input
-              id="invoice_number"
-              v-model="form.invoice_number"
-              type="text"
-              placeholder="Ej. FAC-1001"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="customer_number">Número de cliente</label>
-            <input
-              id="customer_number"
-              v-model="form.customer_number"
-              type="text"
-              placeholder="Ej. CL-10001"
-            />
-          </div>
+    <div class="card shadow-sm lookup-card" role="region" aria-label="Consulta pública de pedidos">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <img src="http://127.0.0.1:8000/images/boxhalcon-logo.png" alt="BOX HALCON" style="max-width:160px;" />
         </div>
 
-        <button type="submit" class="btn" :disabled="loading">
-          {{ loading ? 'Consultando...' : 'Cargar' }}
-        </button>
-      </form>
+        <h3 class="card-title text-center mb-2">Consulta pública de pedidos</h3>
+        <p class="text-muted text-center small mb-4">Ingresa tu número de pedido y número de cliente para consultar el estado.</p>
 
-      <div v-if="errorMessage" class="alert error">
-        {{ errorMessage }}
-      </div>
+        <form @submit.prevent="lookupOrder">
+          <div class="mb-3">
+            <label for="invoice_number" class="form-label">Número de pedido</label>
+            <input id="invoice_number" type="text" class="form-control" v-model="form.invoice_number" placeholder="Ej. FAC-1001" />
+          </div>
 
-      <div v-if="successMessage" class="alert success">
-        {{ successMessage }}
+          <div class="mb-3">
+            <label for="customer_number" class="form-label">Número de cliente</label>
+            <input id="customer_number" type="text" class="form-control" v-model="form.customer_number" placeholder="Ej. CL-10001" />
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" :disabled="loading">{{ loading ? 'Consultando...' : 'Buscar' }}</button>
+          </div>
+        </form>
+
+        <div v-if="errorMessage" class="alert error mt-3">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="alert success mt-3">{{ successMessage }}</div>
       </div>
     </div>
   </div>
@@ -166,6 +155,7 @@ export default {
       errorMessage: '',
       successMessage: '',
       userName: 'UserName',
+      remember: false,
     }
   },
   computed: {
@@ -355,6 +345,156 @@ export default {
   background: #d8f7d4;
   color: #1f6b2d;
 }
+
+/* ============ Nuevo layout: imagen izquierda + tarjeta derecha ============ */
+.lookup-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.hero {
+  flex: 1 1 60%;
+  background-image: linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url('http://127.0.0.1:8000/images/login-hero.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.lookup-card {
+  width: 420px;
+  background: #ffffff;
+  box-shadow: 0 6px 24px rgba(16,24,40,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0; /* padding moved to .card-body */
+  border-left: 4px solid rgba(15,99,255,0.06);
+}
+
+.card-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.card-logo {
+  font-weight: 800;
+  color: #11a0b8;
+  font-size: 18px;
+}
+.card-logo span { color: #0b2946; margin-left: 6px; }
+
+.card-body {
+  padding-top: 6px;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 18px;
+}
+
+.card-form .form-field {
+  margin-bottom: 12px;
+}
+
+.card-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+.card-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-extra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 18px 0;
+}
+
+.remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-size: 13px;
+}
+
+.forgot {
+  color: #0f63ff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: #0f63ff;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Utilidades similares a Bootstrap usadas en login.blade.php */
+.card-body { padding: 24px; }
+.text-center { text-align: center; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.small { font-size: 13px; }
+.form-label { display: block; margin-bottom: 6px; font-weight: 600; color: #374151; font-size: 13px; }
+.form-control { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #e6e6e6; background: #fff; font-size: 14px; outline: none; }
+.form-check { display: inline-flex; align-items: center; gap: 8px; }
+.form-check-input { width: 16px; height: 16px; }
+.form-check-label { font-size: 13px; color: #374151; }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.d-grid { display: block; }
+.mt-3 { margin-top: 12px; }
+
+@media (max-width: 768px) {
+  .lookup-page {
+    flex-direction: column;
+  }
+
+  .hero {
+    height: 220px;
+    flex: none;
+  }
+
+  .lookup-card {
+    width: 100%;
+    padding: 20px;
+    border-left: none;
+  }
+}
+
 
 /* ============ Vista de detalles de pedido ============ */
 .page-details {
