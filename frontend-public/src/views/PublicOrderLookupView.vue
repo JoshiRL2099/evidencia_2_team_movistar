@@ -10,21 +10,25 @@
         </div>
 
         <h3 class="card-title text-center mb-2">Consulta pública de pedidos</h3>
-        <p class="text-muted text-center small mb-4">Ingresa tu número de pedido y número de cliente para consultar el estado.</p>
+        <p class="text-muted text-center small mb-4">Ingresa tu número de pedido y número de cliente para consultar el
+          estado.</p>
 
         <form @submit.prevent="lookupOrder">
           <div class="mb-3">
             <label for="invoice_number" class="form-label">Número de pedido</label>
-            <input id="invoice_number" type="text" class="form-control" v-model="form.invoice_number" placeholder="Ej. FAC-1001" />
+            <input id="invoice_number" type="text" class="form-control" v-model="form.invoice_number"
+              placeholder="Ej. FAC-1001" />
           </div>
 
           <div class="mb-3">
             <label for="customer_number" class="form-label">Número de cliente</label>
-            <input id="customer_number" type="text" class="form-control" v-model="form.customer_number" placeholder="Ej. CL-10001" />
+            <input id="customer_number" type="text" class="form-control" v-model="form.customer_number"
+              placeholder="Ej. CL-10001" />
           </div>
 
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary" :disabled="loading">{{ loading ? 'Consultando...' : 'Buscar' }}</button>
+            <button type="submit" class="btn btn-primary" :disabled="loading">{{ loading ? 'Consultando...' : 'Buscar'
+            }}</button>
           </div>
         </form>
 
@@ -109,15 +113,19 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">ADDRESS</span>
-                <span class="detail-value">{{ order.delivery_address?.address_line_1 || 'N/A' }}</span>
+                <span class="detail-value">{{ order.address || 'N/A' }}</span>
               </div>
+
               <div class="detail-row">
                 <span class="detail-label">MATERIALS</span>
-                <ul class="materials-list">
-                  <li v-for="item in order.items" :key="item.id">
-                    {{ item.product?.name }} - {{ item.quantity }} {{ item.product?.unit || 'unidades' }}
+
+                <ul v-if="order.materials && order.materials.length" class="materials-list">
+                  <li v-for="item in order.materials" :key="item.product_id">
+                    {{ item.product_name }} - {{ item.quantity }} {{ item.unit || 'unidades' }}
                   </li>
                 </ul>
+
+                <span v-else class="detail-value">N/A</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">NOTES</span>
@@ -235,13 +243,16 @@ export default {
     },
     formatStatus(status) {
       if (!status) return 'Pendiente'
+
       const statusMap = {
-        'pending': 'Pendiente',
-        'in_progress': 'En Progreso',
-        'delivered': 'Entregado',
-        'cancelled': 'Cancelado',
+        ORDERED: 'Ordenado',
+        IN_PROCESS: 'En proceso',
+        IN_ROUTE: 'En ruta',
+        DELIVERED: 'Entregado',
+        DELETED: 'Eliminado',
       }
-      return statusMap[status.toLowerCase()] || status
+
+      return statusMap[status] || status
     },
   },
 }
@@ -354,7 +365,7 @@ export default {
 
 .hero {
   flex: 1 1 60%;
-  background-image: linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.08)), url('http://127.0.0.1:8000/images/login-hero.png');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url('http://127.0.0.1:8000/images/login-hero.png');
   background-size: cover;
   background-position: center;
 }
@@ -362,12 +373,13 @@ export default {
 .lookup-card {
   width: 420px;
   background: #ffffff;
-  box-shadow: 0 6px 24px rgba(16,24,40,0.08);
+  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0; /* padding moved to .card-body */
-  border-left: 4px solid rgba(15,99,255,0.06);
+  padding: 0;
+  /* padding moved to .card-body */
+  border-left: 4px solid rgba(15, 99, 255, 0.06);
 }
 
 .card-top {
@@ -382,7 +394,11 @@ export default {
   color: #11a0b8;
   font-size: 18px;
 }
-.card-logo span { color: #0b2946; margin-left: 6px; }
+
+.card-logo span {
+  color: #0b2946;
+  margin-left: 6px;
+}
 
 .card-body {
   padding-top: 6px;
@@ -462,21 +478,79 @@ export default {
 }
 
 /* Utilidades similares a Bootstrap usadas en login.blade.php */
-.card-body { padding: 24px; }
-.text-center { text-align: center; }
-.mb-4 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.small { font-size: 13px; }
-.form-label { display: block; margin-bottom: 6px; font-weight: 600; color: #374151; font-size: 13px; }
-.form-control { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #e6e6e6; background: #fff; font-size: 14px; outline: none; }
-.form-check { display: inline-flex; align-items: center; gap: 8px; }
-.form-check-input { width: 16px; height: 16px; }
-.form-check-label { font-size: 13px; color: #374151; }
-.d-flex { display: flex; }
-.justify-content-between { justify-content: space-between; }
-.align-items-center { align-items: center; }
-.d-grid { display: block; }
-.mt-3 { margin-top: 12px; }
+.card-body {
+  padding: 24px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.form-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-check-input {
+  width: 16px;
+  height: 16px;
+}
+
+.form-check-label {
+  font-size: 13px;
+  color: #374151;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.d-grid {
+  display: block;
+}
+
+.mt-3 {
+  margin-top: 12px;
+}
 
 @media (max-width: 768px) {
   .lookup-page {

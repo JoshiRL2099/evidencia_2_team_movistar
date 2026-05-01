@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'auth' => EnsureUserIsAuthenticated::class,
+            // Role middleware accepts a comma separated list of role names, e.g. role:ADMIN,SALES
+            'role' => App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

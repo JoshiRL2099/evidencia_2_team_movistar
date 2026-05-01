@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
+    @php $__role = auth()->user()->role->name ?? ''; @endphp
     <div class="row">
         <div class="col-12">
             <h1 class="display-5 text-primary">Welcome back, {{ $user->full_name }}.</h1>
@@ -132,8 +133,13 @@
 
     <div class="row mt-3">
         <div class="col-12">
-            <a href="{{ route('orders.index') }}" class="btn btn-outline-primary btn-sm">Ver órdenes</a>
-            <a href="{{ route('users.index') }}" class="btn btn-outline-secondary btn-sm">Ver usuarios</a>
+            @if(in_array($__role, ['ADMIN','SALES','WAREHOUSE','PURCHASING','ROUTE']))
+                <a href="{{ route('orders.index') }}" class="btn btn-outline-primary btn-sm">Ver órdenes</a>
+            @endif
+
+            @if($__role === 'ADMIN')
+                <a href="{{ route('users.index') }}" class="btn btn-outline-secondary btn-sm">Ver usuarios</a>
+            @endif
         </div>
     </div>
 

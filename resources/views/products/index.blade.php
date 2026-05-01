@@ -12,9 +12,12 @@
         </div>
     @endif
 
-    <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">
-        Nuevo Producto
-    </a>
+    @php $__role = auth()->user()->role->name ?? ''; @endphp
+    @if($__role === 'ADMIN')
+        <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">
+            Nuevo Producto
+        </a>
+    @endif
 
     <table class="table table-bordered">
         <thead>
@@ -44,17 +47,19 @@
                             Ver
                         </a>
 
-                        <a href="{{ route('products.edit', $product->product_id) }}" class="btn btn-warning btn-sm">
-                            Editar
-                        </a>
+                        @if($__role === 'ADMIN')
+                            <a href="{{ route('products.edit', $product->product_id) }}" class="btn btn-warning btn-sm">
+                                Editar
+                            </a>
 
-                        <form action="{{ route('products.destroy', $product->product_id) }}" method="POST" style="display:inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-danger btn-sm">
-                                Eliminar
-                            </button>
-                        </form>
+                            <form action="{{ route('products.destroy', $product->product_id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm">
+                                    Eliminar
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @empty

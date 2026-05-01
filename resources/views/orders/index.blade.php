@@ -5,8 +5,17 @@
     <div class="container">
         <h2>Lista de Órdenes</h2>
 
-        <a href="{{ route('orders.create') }}" class="btn btn-primary mb-3">Nueva Orden</a>
-        <a href="{{ route('orders.trash') }}" class="btn btn-secondary mb-3">Papelera</a>
+        @php $__role = auth()->user()->role->name ?? ''; @endphp
+
+        {{-- Nueva Orden: solo para Sales y Admin --}}
+        @if(in_array($__role, ['ADMIN','SALES']))
+            <a href="{{ route('orders.create') }}" class="btn btn-primary mb-3">Nueva Orden</a>
+        @endif
+
+        {{-- Papelera: solo Admin --}}
+        @if($__role === 'ADMIN')
+            <a href="{{ route('orders.trash') }}" class="btn btn-secondary mb-3">Papelera</a>
+        @endif
 
         @if(session('success'))
             <div class="alert alert-success">
@@ -37,14 +46,19 @@
                         <td>{{ $order->status }}</td>
                         <td>
                             <a href="{{ route('orders.show', $order->order_id) }}" class="btn btn-info btn-sm">Ver</a>
-                            <a href="{{ route('orders.edit', $order->order_id) }}" class="btn btn-warning btn-sm">Editar</a>
 
-                            <form action="{{ route('orders.destroy', $order->order_id) }}" method="POST"
-                                style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-danger btn-sm">Eliminar</button>
-                            </form>
+                            @if(in_array($__role, ['ADMIN','SALES','WAREHOUSE','ROUTE']))
+                                <a href="{{ route('orders.edit', $order->order_id) }}" class="btn btn-warning btn-sm">Editar</a>
+                            @endif
+
+                            @if($__role === 'ADMIN')
+                                <form action="{{ route('orders.destroy', $order->order_id) }}" method="POST"
+                                    style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

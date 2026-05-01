@@ -33,11 +33,14 @@
                         <td>${{ number_format($order->total, 2) }}</td>
                         <td>{{ $order->deleted_at }}</td>
                         <td>
-                            <form action="{{ route('orders.restore', $order->order_id) }}" method="POST"
-                                style="display:inline;">
-                                @csrf
-                                <button class="btn btn-success btn-sm">Restaurar</button>
-                            </form>
+                            @php $__role = auth()->user()->role->name ?? ''; @endphp
+                            @if($__role === 'ADMIN')
+                                <form action="{{ route('orders.restore', $order->order_id) }}" method="POST"
+                                    style="display:inline;">
+                                    @csrf
+                                    <button class="btn btn-success btn-sm">Restaurar</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

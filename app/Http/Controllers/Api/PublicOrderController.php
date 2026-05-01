@@ -31,7 +31,12 @@ class PublicOrderController extends Controller
         $customerNumber = $request->input('customer_number');
 
         $order = Order::query()
-            ->with('customer')
+            ->with([
+                'customer',
+                'deliveryAddress',
+                'items.product',
+                'photos',
+            ])
             ->where('invoice_number', $invoiceNumber)
             ->where('is_deleted', false)
             ->where('status', '!=', 'DELETED')
@@ -46,6 +51,21 @@ class PublicOrderController extends Controller
             ], 404);
         }
 
+        $address = $order->deliveryAddress;
+
+        $fullAddress = $address
+            ? trim(collect([
+                $address->street,
+                $address->ext_number ? 'Ext. ' . $address->ext_number : null,
+                $address->int_number ? 'Int. ' . $address->int_number : null,
+                $address->neighborhood,
+                $address->city,
+                $address->state,
+                $address->zip ? 'C.P. ' . $address->zip : null,
+                $address->references ? 'Referencias: ' . $address->references : null,
+            ])->filter()->implode(', '))
+            : null;
+
         return response()->json([
             'message' => 'Pedido encontrado.',
             'data' => [
@@ -54,11 +74,33 @@ class PublicOrderController extends Controller
                 'order_datetime' => optional($order->order_datetime)->format('Y-m-d H:i:s'),
                 'status' => $order->status,
                 'notes' => $order->notes,
+
                 'customer' => [
                     'customer_id' => $order->customer?->customer_id,
                     'customer_number' => $order->customer?->customer_number,
                     'display_name' => $order->customer?->display_name,
                 ],
+
+                'address' => $fullAddress,
+
+                'materials' => $order->items->map(function ($item) {
+                    return [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product?->name ?? 'Producto sin nombre',
+                        'quantity' => $item->quantity,
+                        'unit' => $item->product?->unit,
+                        'unit_price' => $item->unit_price,
+                        'subtotal' => $item->quantity * $item->unit_price,
+                    ];
+                })->values(),
+
+                'photos' => $order->photos->map(function ($photo) {
+                    return [
+                        'photo_id' => $photo->photo_id ?? null,
+                        'path' => $photo->photo_path ?? $photo->path ?? null,
+                        'type' => $photo->type ?? null,
+                    ];
+                })->values(),
             ],
         ]);
     }

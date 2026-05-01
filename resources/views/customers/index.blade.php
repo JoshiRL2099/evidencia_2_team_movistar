@@ -3,11 +3,14 @@
 @section('content')
 <div class="container">
 
+    @php $__role = auth()->user()->role->name ?? ''; @endphp
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Clientes</h2>
-        <a href="{{ route('customers.create') }}" class="btn btn-primary">
-            + Nuevo Cliente
-        </a>
+        @if(in_array($__role, ['ADMIN','SALES']))
+            <a href="{{ route('customers.create') }}" class="btn btn-primary">
+                + Nuevo Cliente
+            </a>
+        @endif
     </div>
 
     @if(session('success'))
@@ -45,17 +48,19 @@
                             <a href="{{ route('customers.show', $customer->customer_id) }}"
                                class="btn btn-sm btn-info">Ver</a>
 
-                            <a href="{{ route('customers.edit', $customer->customer_id) }}"
-                               class="btn btn-sm btn-warning">Editar</a>
+                                                        @if(in_array($__role, ['ADMIN','SALES']))
+                                                                <a href="{{ route('customers.edit', $customer->customer_id) }}"
+                                                                     class="btn btn-sm btn-warning">Editar</a>
 
-                            <form action="{{ route('customers.destroy', $customer->customer_id) }}"
-                                  method="POST"
-                                  class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar este cliente?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger">Eliminar</button>
-                            </form>
+                                                                <form action="{{ route('customers.destroy', $customer->customer_id) }}"
+                                                                            method="POST"
+                                                                            class="d-inline"
+                                                                            onsubmit="return confirm('¿Eliminar este cliente?')">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="btn btn-sm btn-danger">Eliminar</button>
+                                                                </form>
+                                                        @endif
                         </td>
                     </tr>
                 @endforeach

@@ -13,8 +13,9 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user()->load('role');
+        $role = strtoupper(trim($user->role->name ?? ''));
 
-        if ($user->role && $user->role->name === 'ADMIN') {
+        if ($role === 'ADMIN') {
             return $this->adminDashboard($user);
         }
 

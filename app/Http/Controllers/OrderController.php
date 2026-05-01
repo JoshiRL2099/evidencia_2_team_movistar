@@ -34,6 +34,11 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+        $role = Auth::user()->role->name ?? '';
+        if (!in_array($role, ['ADMIN', 'SALES'])) {
+            return redirect()->route('dashboard')->with('error', 'No autorizado para crear órdenes.');
+        }
+
         $data = $request->validate([
             'invoice_number'       => ['required', 'string', 'max:255'],
             'customer_id'          => ['required', 'exists:customers,customer_id'],
@@ -123,6 +128,45 @@ class OrderController extends Controller
     {
         $order = Order::with(['deliveryAddress', 'items'])->findOrFail($id);
 
+        $role = Auth::user()->role->name ?? '';
+
+        if (in_array($role, ['WAREHOUSE', 'ROUTE'])) {
+            $data = $request->validate([
+                'status' => ['required', 'in:ORDERED,IN_PROCESS,IN_ROUTE,DELIVERED,DELETED'],
+            ]);
+
+            $current = $order->status;
+
+            if ($role === 'WAREHOUSE') {
+                $allowed = ['IN_PROCESS', 'IN_ROUTE'];
+                if (!in_array($data['status'], $allowed)) {
+                    return redirect()->route('orders.show', $order->order_id)
+                        ->with('error', 'Warehouse no autorizado para ese cambio de estado.');
+                }
+            }
+
+            if ($role === 'ROUTE') {
+                $allowed = ['IN_ROUTE', 'DELIVERED'];
+                if (!in_array($data['status'], $allowed)) {
+                    return redirect()->route('orders.show', $order->order_id)
+                        ->with('error', 'Route no autorizado para ese cambio de estado.');
+                }
+
+                if ($data['status'] === 'DELIVERED' && $order->photos()->count() === 0) {
+                    return redirect()->route('orders.show', $order->order_id)
+                        ->with('error', 'Se requiere evidencia (fotos) para marcar como entregado.');
+                }
+            }
+
+            $order->update([
+                'status'     => $data['status'],
+                'updated_at' => now(),
+            ]);
+
+            return redirect()->route('orders.index')
+                ->with('success', 'Estado de la orden actualizado.');
+        }
+
         $data = $request->validate([
             'invoice_number'       => ['required', 'string', 'max:255'],
             'customer_id'          => ['required', 'exists:customers,customer_id'],
@@ -141,7 +185,7 @@ class OrderController extends Controller
 
             'items'                => ['required', 'array', 'min:1'],
             'items.*.product_id'   => ['required', 'exists:products,product_id'],
-            'items.*.quantity'     => ['required', 'integer', 'min:1'], // ✅ entero
+            'items.*.quantity'     => ['required', 'integer', 'min:1'],
             'items.*.unit_price'   => ['nullable', 'numeric', 'min:0'],
         ]);
 
@@ -168,7 +212,6 @@ class OrderController extends Controller
                 ]);
             }
 
-            // ✅ Eliminar items anteriores y recrgarlos
             $order->items()->delete();
 
             foreach ($data['items'] as $item) {
@@ -177,7 +220,7 @@ class OrderController extends Controller
                     'order_id'   => $order->order_id,
                     'product_id' => $item['product_id'],
                     'quantity'   => (int) $item['quantity'],
-                    'unit_price' => $product->price ?? 0, // ✅ precio del producto
+                    'unit_price' => $product->price ?? 0,
                 ]);
             }
         });
@@ -188,6 +231,11 @@ class OrderController extends Controller
 
     public function destroy(string $id)
     {
+        $role = Auth::user()->role->name ?? '';
+        if ($role !== 'ADMIN') {
+            return redirect()->route('dashboard')->with('error', 'No autorizado para eliminar órdenes.');
+        }
+
         $order = Order::findOrFail($id);
 
         $order->update([
@@ -203,6 +251,11 @@ class OrderController extends Controller
 
     public function trash()
     {
+        $role = Auth::user()->role->name ?? '';
+        if ($role !== 'ADMIN') {
+            return redirect()->route('dashboard')->with('error', 'No autorizado.');
+        }
+
         $orders = Order::with(['customer', 'createdBy', 'items'])
             ->where('is_deleted', true)
             ->orderByDesc('deleted_at')
@@ -213,6 +266,11 @@ class OrderController extends Controller
 
     public function restore(string $id)
     {
+        $role = Auth::user()->role->name ?? '';
+        if ($role !== 'ADMIN') {
+            return redirect()->route('dashboard')->with('error', 'No autorizado para restaurar órdenes.');
+        }
+
         $order = Order::findOrFail($id);
 
         $order->update([
