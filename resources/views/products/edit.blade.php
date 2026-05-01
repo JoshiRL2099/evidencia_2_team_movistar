@@ -46,7 +46,6 @@
                    required>
         </div>
 
-        {{-- ✅ Campo precio agregado --}}
         <div class="mb-3">
             <label>Precio</label>
             <input type="number"
@@ -60,13 +59,15 @@
 
         <div class="mb-3">
             <label>Cantidad en stock</label>
-            <input type="number"
+            <input type="text"
+                   id="stock_quantity"
                    name="stock_quantity"
-                   value="{{ old('stock_quantity', $product->stock_quantity ?? 0) }}"
+                   value="{{ old('stock_quantity', (int) $product->stock_quantity) }}"
                    class="form-control"
-                   step="0.01"
-                   min="0"
                    required>
+            <div id="stock-error" class="text-danger" style="display:none;">
+                Solo se permiten números enteros.
+            </div>
         </div>
 
         <div class="mb-3 form-check">
@@ -83,4 +84,29 @@
 
     </form>
 </div>
+
+<script>
+    const stockInput = document.getElementById('stock_quantity');
+    const stockError = document.getElementById('stock-error');
+
+    stockInput.addEventListener('keydown', function (e) {
+        if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E' || e.key === '-') {
+            e.preventDefault();
+            stockError.style.display = 'block';
+        } else {
+            stockError.style.display = 'none';
+        }
+    });
+
+    stockInput.addEventListener('paste', function (e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        this.value = text.replace(/[^0-9]/g, '');
+    });
+
+    stockInput.addEventListener('input', function () {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+</script>
+
 @endsection

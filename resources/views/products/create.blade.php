@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container">
 
     <h2>Nuevo Producto</h2>
@@ -54,7 +55,6 @@
             @enderror
         </div>
 
-        {{-- ✅ Campo precio agregado --}}
         <div class="mb-3">
             <label>Precio</label>
             <input type="number"
@@ -75,7 +75,7 @@
                    name="stock_quantity"
                    value="{{ old('stock_quantity', 0) }}"
                    class="form-control @error('stock_quantity') is-invalid @enderror"
-                   step="0.01"
+                   step="1"
                    min="0"
                    required>
             @error('stock_quantity')
